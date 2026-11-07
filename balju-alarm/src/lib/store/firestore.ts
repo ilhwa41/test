@@ -74,7 +74,8 @@ export function createFirestoreStore(ownerId: string): DataStore {
     if (items && logs) publish({ status: "ready", items, logs });
   }
 
-  function fail() {
+  function fail(error: Error) {
+    console.error("Firestore 구독 오류", error);
     publish({ status: "error", message: "데이터를 불러오지 못했어요. 연결과 Firestore 설정을 확인해 주세요." });
   }
 
