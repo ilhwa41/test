@@ -1,0 +1,634 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>발주 알림 프리뷰</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable.css">
+<style>
+/* 색상·크기 값은 docs/06-design.md 3~5장 기준 */
+:root {
+  --bg: #F4F6FB; --card: #FFFFFF; --banner: #E3EEFB;
+  --blue: #2F6BE8; --blue-bg: #E3EDFC; --green: #3DAE74; --green-bg: #E3F4EA;
+  --red: #E5484D; --red-bg: #FDE7E7; --red-text: #D7373F;
+  --orange: #F08A3A; --orange-bg: #FCEBD6; --orange-text: #C98336;
+  --purple: #6B5CE7; --purple-bg: #ECEAFD; --purple-text: #5547C9;
+  --title: #1B2430; --text: #4B5563; --sub: #8B95A5; --line: #E7EBF2;
+  --shadow: 0 2px 10px rgba(27, 36, 48, .06);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg); color: var(--text); font-size: 16px; line-height: 1.45;
+  font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+a { color: inherit; text-decoration: none; }
+h1, h2, h3, p { margin: 0; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+.app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
+.sidebar { background: var(--card); border-right: 1px solid var(--line); padding: 20px 12px; position: sticky; top: 0; height: 100vh; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 22px; color: var(--title); font-size: 18px; font-weight: 700; }
+.brand svg { width: 28px; height: 28px; color: var(--blue); }
+.nav { display: flex; flex-direction: column; gap: 6px; }
+.nav a { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 14px; border-radius: 12px; color: var(--title); font-weight: 500; }
+.nav a svg { width: 20px; height: 20px; flex: none; }
+.nav a:hover { background: var(--bg); }
+.nav a.on { background: var(--blue-bg); color: var(--blue); font-weight: 700; }
+
+.main { min-width: 0; }
+.topbar { display: flex; align-items: center; justify-content: flex-end; gap: 14px; height: 68px; padding: 0 28px; background: var(--card); border-bottom: 1px solid var(--line); }
+.topbar .brand { display: none; margin-right: auto; padding: 0; }
+.date { border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; font-size: 14px; }
+.icon-btn { position: relative; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; color: var(--title); }
+.icon-btn:hover { background: var(--bg); }
+.icon-btn svg { width: 22px; height: 22px; }
+.dot { position: absolute; top: 9px; right: 10px; width: 9px; height: 9px; border-radius: 50%; background: var(--red); border: 2px solid var(--card); }
+.user { color: var(--title); font-weight: 500; }
+
+.content { max-width: 1120px; margin: 0 auto; padding: 24px 28px 40px; }
+.note { margin-top: 28px; color: var(--sub); font-size: 13px; }
+
+.banner { display: flex; align-items: center; gap: 18px; background: var(--banner); border-radius: 16px; padding: 22px 26px; }
+.banner-icon { display: grid; place-items: center; flex: none; width: 56px; height: 56px; border-radius: 50%; color: #fff; }
+.banner-icon svg { width: 30px; height: 30px; }
+.banner h1 { color: var(--title); font-size: 24px; font-weight: 700; line-height: 1.3; }
+.banner p { color: var(--text); margin-top: 2px; }
+
+.quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0 24px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 56px; padding: 0 20px; border: 1px solid transparent; border-radius: 14px; font-size: 18px; font-weight: 700; }
+.btn svg { width: 22px; height: 22px; }
+.btn-blue { background: var(--blue); color: #fff; }
+.btn-green { background: var(--green); color: #fff; }
+.btn-white { background: var(--card); color: var(--title); border-color: var(--line); }
+.btn-sm { min-height: 44px; font-size: 15px; padding: 0 16px; border-radius: 12px; }
+
+.cols { display: grid; grid-template-columns: 3fr 2fr; gap: 24px; align-items: start; }
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; margin-bottom: 8px; }
+.sec-head h2 { color: var(--title); font-size: 20px; font-weight: 700; }
+.more { display: inline-flex; align-items: center; min-height: 44px; color: var(--blue); font-size: 14px; font-weight: 500; }
+.stack { display: grid; gap: 14px; }
+
+.card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 20px; }
+a.card:hover { box-shadow: 0 4px 16px rgba(27, 36, 48, .11); }
+.item { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 16px; align-items: center; }
+.item-icon { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--bg); color: var(--text); }
+.item-icon svg { width: 28px; height: 28px; }
+.item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.item-name { color: var(--title); font-size: 18px; font-weight: 700; }
+.item-meta { color: var(--text); margin-top: 2px; }
+.item-meta .sep { color: var(--line); margin: 0 8px; }
+.dday { font-weight: 700; }
+.dday.hot { color: var(--red-text); }
+.eta { color: var(--purple-text); font-size: 14px; margin-top: 2px; }
+
+.badge { flex: none; display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+.s-normal { --c: var(--green); --cb: var(--green-bg); --ct: #2B8558; }
+.s-warning { --c: var(--orange); --cb: var(--orange-bg); --ct: var(--orange-text); }
+.s-reorder { --c: var(--red); --cb: var(--red-bg); --ct: var(--red-text); }
+.s-urgent { --c: var(--red-text); --cb: var(--red-bg); --ct: var(--red-text); }
+.s-inbound { --c: var(--purple); --cb: var(--purple-bg); --ct: var(--purple-text); }
+.badge { background: var(--cb); color: var(--ct); }
+.s-urgent .badge, .badge.s-urgent { background: var(--red-text); color: #fff; }
+
+.bar { display: block; position: relative; height: 8px; margin-top: 10px; border-radius: 999px; background: var(--cb); }
+.bar i { display: block; height: 100%; border-radius: 999px; background: var(--c); }
+.bar b { position: absolute; top: -3px; width: 2px; height: 14px; background: var(--title); opacity: .55; }
+
+.activity { padding: 6px 20px; }
+.act { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+.act:last-child { border-bottom: 0; }
+.act-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 12px; }
+.act-icon svg { width: 22px; height: 22px; }
+.act-in { background: var(--green-bg); color: var(--green); }
+.act-out { background: var(--blue-bg); color: var(--blue); }
+.act-alert { background: var(--red-bg); color: var(--red-text); }
+.act-title { color: var(--title); font-size: 15px; font-weight: 500; }
+.act-time { color: var(--sub); font-size: 13px; }
+.act .right { margin-left: auto; }
+
+.page-title { color: var(--title); font-size: 24px; font-weight: 700; margin-bottom: 16px; }
+.empty { color: var(--sub); text-align: center; padding: 24px 0; }
+.tabs, .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.tabs a, .chips a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 18px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); color: var(--text); font-weight: 500; }
+.tabs a.on, .chips a.on { background: var(--blue-bg); border-color: var(--blue-bg); color: var(--blue); font-weight: 700; }
+
+.form { display: grid; gap: 16px; max-width: 560px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field > span { color: var(--title); font-size: 15px; font-weight: 500; }
+.field small { color: var(--sub); font-size: 13px; }
+.field input, .field select { width: 100%; min-height: 48px; padding: 0 12px; background: #fff; border: 1px solid var(--line); border-radius: 10px; }
+.error { color: var(--red-text); font-size: 14px; min-height: 20px; }
+.hint { background: var(--bg); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+.hint strong { color: var(--title); }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+.facts div { background: var(--bg); border-radius: 12px; padding: 12px 14px; min-width: 0; }
+.facts span { display: block; color: var(--sub); font-size: 13px; }
+.facts strong { color: var(--title); }
+.warn { margin-top: 14px; background: var(--red-bg); color: var(--red-text); border-radius: 12px; padding: 12px 14px; font-size: 14px; }
+
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: var(--title); color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 15px; z-index: 10; max-width: calc(100vw - 32px); }
+
+@media (max-width: 767px) {
+  .app { display: block; }
+  .sidebar { position: fixed; inset: auto 0 0 0; height: auto; padding: 0 0 env(safe-area-inset-bottom); border-right: 0; border-top: 1px solid var(--line); z-index: 5; }
+  .sidebar .brand { display: none; }
+  .nav { flex-direction: row; }
+  .nav a { flex: 1; flex-direction: column; justify-content: center; gap: 2px; min-height: 60px; padding: 0 2px; border-radius: 0; font-size: 13px; }
+  .nav a.on { background: none; }
+  .topbar { height: 60px; padding: 0 12px 0 16px; gap: 4px; }
+  .topbar .brand { display: flex; min-height: 44px; }
+  .date { display: none; }
+  .content { padding: 16px 16px 92px; }
+  .banner { padding: 16px; gap: 14px; }
+  .banner-icon { width: 48px; height: 48px; }
+  .banner h1 { font-size: 20px; }
+  .quick { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .quick .btn-white { grid-column: 1 / -1; }
+  .quick .btn { padding: 0 8px; }
+  .cols { grid-template-columns: minmax(0, 1fr); }
+  .facts { grid-template-columns: 1fr 1fr; }
+  .toast { bottom: 84px; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-box" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M12 3 4 7v10l8 4 8-4V7l-8-4Zm-8 4 8 4 8-4m-8 4v10"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="m4 11 8-7 8 7v9h-5v-6H9v6H4v-9Z"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="m4 20 1-5L16 4l4 4L9 19l-5 1Zm9-13 4 4"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 4h14v16H5V4Zm4 5h6m-6 4h6m-6 4h3"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7ZM12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1m0-12.8-2.1 2.1m-8.6 8.6-2.1 2.1"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4l2-2Zm4 4a2 2 0 0 0 4 0"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" d="M12 5v9m0 5v.01"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-yarn" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M5 8c5 0 10 3 13 9M8 4.5c4 2 8 6 10.5 11M4 13c3 0 7 2 9 7"/></g></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 4h8l8 8-8 8-8-8V4Zm4.5 4.5v.01"/></symbol>
+    <symbol id="i-roll" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></g></symbol>
+  </defs>
+</svg>
+
+<div class="app">
+  <aside class="sidebar">
+    <a class="brand" href="#/dashboard"><svg><use href="#i-box"/></svg>발주 알림</a>
+    <nav class="nav" aria-label="메뉴" id="nav"></nav>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <a class="brand" href="#/dashboard"><svg><use href="#i-box"/></svg>발주 알림</a>
+      <span class="date" id="today"></span>
+      <a class="icon-btn" href="#/alerts" aria-label="알림 기록"><svg><use href="#i-bell"/></svg><span class="dot" id="bell-dot"></span></a>
+      <span class="user">대표님</span>
+    </header>
+    <main class="content" id="view"></main>
+  </div>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script>
+'use strict';
+/* 화면 확인용 프로토타입. 데이터는 메모리에만 있고 새로고침하면 샘플로 돌아간다.
+   docs에 숫자 기준이 없어 임의로 정한 값: 주의 = 발주 기준의 1.5배 이하. */
+const WARNING_RATIO = 1.5;
+const LABEL = { normal: '정상', warning: '주의', reorder: '발주 필요', urgent: '긴급', inbound: '입고 대기' };
+const DAYS = ['일', '월', '화', '수', '목', '금', '토'];
+const ICONS = { 'i-yarn': '원사', 'i-box': '상자', 'i-tag': '라벨', 'i-roll': '롤' };
+
+const now = new Date();
+const at = (dayOffset, h = 12, m = 0) => {
+  const d = new Date(now);
+  d.setDate(d.getDate() + dayOffset);
+  d.setHours(h, m, 0, 0);
+  return d;
+};
+
+const state = {
+  items: [
+    { id: 'yarn', name: '원사', unit: '개', icon: 'i-yarn', supplier: '대성원사', currentStock: 380, dailyUsage: 100, leadTimeDays: 21, safetyStock: 100, reorderPoint: 400, urgentPoint: 200, maxStorage: 1000 },
+    { id: 'pack', name: '포장재', unit: '개', icon: 'i-box', supplier: '한빛포장', currentStock: 1200, dailyUsage: 100, leadTimeDays: 7, safetyStock: 100, reorderPoint: 800, urgentPoint: 300, maxStorage: 3000 },
+    { id: 'label', name: '라벨지', unit: '장', icon: 'i-tag', supplier: '미래인쇄', currentStock: 900, dailyUsage: 120, leadTimeDays: 14, safetyStock: 200, reorderPoint: 1000, urgentPoint: 400, maxStorage: 5000 },
+    { id: 'band', name: '고무밴드', unit: '봉', icon: 'i-roll', supplier: '한빛포장', currentStock: 260, dailyUsage: 4, leadTimeDays: 5, safetyStock: 10, reorderPoint: 40, urgentPoint: 15, maxStorage: 400 },
+    { id: 'tape', name: '박스테이프', unit: '롤', icon: 'i-roll', supplier: '한빛포장', currentStock: 180, dailyUsage: 6, leadTimeDays: 5, safetyStock: 12, reorderPoint: 50, urgentPoint: 20, maxStorage: 300 },
+  ],
+  logs: [
+    { itemId: 'pack', type: 'in', quantity: 200, memo: '', occurredAt: at(0, 14, 30) },
+    { itemId: 'yarn', type: 'out', quantity: 100, memo: '', occurredAt: at(0, 10, 20) },
+    { itemId: 'label', type: 'out', quantity: 500, memo: '', occurredAt: at(-1, 17, 45) },
+    { itemId: 'tape', type: 'out', quantity: 12, memo: '', occurredAt: at(-1, 16, 10) },
+    { itemId: 'yarn', type: 'out', quantity: 100, memo: '', occurredAt: at(-1, 10, 5) },
+  ],
+  orders: [
+    { id: 'o1', itemId: 'label', quantity: 3000, orderedAt: at(-2), expectedArrivalAt: at(12), status: 'ordered', receivedAt: null },
+    { id: 'o2', itemId: 'pack', quantity: 200, orderedAt: at(-9), expectedArrivalAt: at(0), status: 'received', receivedAt: at(0, 14, 30) },
+  ],
+  alerts: [
+    { itemId: 'yarn', level: 'reorder', sentAt: at(0, 9, 0) },
+    { itemId: 'label', level: 'reorder', sentAt: at(-3, 9, 0) },
+  ],
+};
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = n => Number(n).toLocaleString('ko-KR');
+const pad = n => String(n).padStart(2, '0');
+const fmtDate = d => `${pad(d.getMonth() + 1)}.${pad(d.getDate())} (${DAYS[d.getDay()]})`;
+const fmtDateTime = d => `${fmtDate(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const inputDate = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const icon = id => `<svg aria-hidden="true"><use href="#${id}"/></svg>`;
+
+const itemById = id => state.items.find(i => i.id === id);
+const openOrder = id => state.orders.find(o => o.itemId === id && o.status === 'ordered');
+const daysLeft = i => (i.dailyUsage > 0 ? Math.floor(i.currentStock / i.dailyUsage) : null);
+const recommended = i => i.dailyUsage * i.leadTimeDays + i.safetyStock;
+
+function statusOf(i) {
+  if (i.currentStock <= i.urgentPoint) return 'urgent';
+  if (openOrder(i.id)) return 'inbound';
+  if (i.currentStock <= i.reorderPoint) return 'reorder';
+  if (i.currentStock <= i.reorderPoint * WARNING_RATIO) return 'warning';
+  return 'normal';
+}
+
+const bySoonest = (a, b) => (daysLeft(a) ?? Infinity) - (daysLeft(b) ?? Infinity);
+
+function itemCard(i, linked = true) {
+  const s = statusOf(i);
+  const d = daysLeft(i);
+  const order = openOrder(i.id);
+  const fill = Math.min(100, (i.currentStock / i.maxStorage) * 100);
+  const tick = Math.min(100, (i.reorderPoint / i.maxStorage) * 100);
+  const hot = s === 'reorder' || s === 'urgent';
+  const body = `<div class="item-icon">${icon(i.icon)}</div>
+    <div>
+      <div class="item-top"><span class="item-name">${esc(i.name)}</span><span class="badge">${LABEL[s]}</span></div>
+      <p class="item-meta">${num(i.currentStock)}${esc(i.unit)}<span class="sep">|</span><span class="dday ${hot ? 'hot' : ''}">${d === null ? '소진일 계산 전' : `D-${d}`}</span></p>
+      ${order ? `<p class="eta">입고 예정 ${fmtDate(order.expectedArrivalAt)}</p>` : ''}
+      <div class="bar"><i style="width:${fill}%"></i><b style="left:${tick}%"></b></div>
+    </div>`;
+  return linked
+    ? `<a class="card item s-${s}" href="#/item/${esc(i.id)}">${body}</a>`
+    : `<div class="card item s-${s}">${body}</div>`;
+}
+
+function logRow(l) {
+  const i = itemById(l.itemId);
+  const name = i ? i.name : '삭제된 품목';
+  const unit = i ? i.unit : '개';
+  const isIn = l.type === 'in';
+  return `<div class="act">
+    <span class="act-icon ${isIn ? 'act-in' : 'act-out'}">${icon(isIn ? 'i-check' : 'i-pen')}</span>
+    <div><p class="act-title">${esc(name)} ${num(l.quantity)}${esc(unit)} ${isIn ? '입고' : '사용'}</p>
+    <p class="act-time">${fmtDateTime(l.occurredAt)}${l.memo ? ` · ${esc(l.memo)}` : ''}</p></div>
+  </div>`;
+}
+
+const sortedLogs = () => [...state.logs].sort((a, b) => b.occurredAt - a.occurredAt);
+
+function banner() {
+  const st = state.items.map(statusOf);
+  const need = st.filter(s => s === 'reorder' || s === 'urgent').length;
+  const warn = st.filter(s => s === 'warning').length;
+  const inbound = st.filter(s => s === 'inbound').length;
+  const inboundLine = inbound ? `입고 대기 ${inbound}개` : '';
+  if (!state.items.length) return bannerHtml('var(--blue)', 'i-plus', '품목을 추가해서 시작해 보세요', '');
+  if (need) return bannerHtml('var(--red)', 'i-alert', `발주가 필요한 품목이 ${need}개 있어요`, inboundLine);
+  if (warn) return bannerHtml('var(--orange)', 'i-alert', `곧 발주할 품목이 ${warn}개 있어요`, inboundLine);
+  return bannerHtml('var(--green)', 'i-check', '오늘도 수고 많으세요!',
+    [`현재 ${state.items.length}개 품목이 정상적으로 관리되고 있습니다.`, inboundLine].filter(Boolean).join(' · '));
+}
+const bannerHtml = (color, ic, title, sub) => `<section class="banner">
+  <span class="banner-icon" style="background:${color}">${icon(ic)}</span>
+  <div><h1>${title}</h1>${sub ? `<p>${sub}</p>` : ''}</div>
+</section>`;
+
+const views = {
+  dashboard() {
+    const list = state.items
+      .filter(i => ['reorder', 'warning', 'urgent'].includes(statusOf(i)))
+      .sort(bySoonest);
+    return `${banner()}
+    <div class="quick">
+      <a class="btn btn-blue" href="#/input/use">${icon('i-pen')}사용 입력</a>
+      <a class="btn btn-green" href="#/input/in">${icon('i-box')}입고 입력</a>
+      <a class="btn btn-white" href="#/new">품목 추가 ${icon('i-plus')}</a>
+    </div>
+    <div class="cols">
+      <section>
+        <div class="sec-head"><h2>알림이 필요한 품목</h2><a class="more" href="#/items">전체 보기 ›</a></div>
+        <div class="stack">${list.map(i => itemCard(i)).join('') || '<p class="card empty">지금은 알림이 필요한 품목이 없어요</p>'}</div>
+      </section>
+      <section>
+        <div class="sec-head"><h2>최근 활동 내역</h2><a class="more" href="#/activity">전체 보기 ›</a></div>
+        <div class="card activity">${sortedLogs().slice(0, 3).map(logRow).join('') || '<p class="empty">아직 기록이 없어요</p>'}</div>
+      </section>
+    </div>`;
+  },
+
+  input(tab = 'use', itemId = '') {
+    const isUse = tab !== 'in';
+    if (!state.items.length) return `<h1 class="page-title">입력하기</h1><p class="card empty">먼저 품목을 추가해 주세요</p>`;
+    return `<h1 class="page-title">입력하기</h1>
+    <div class="tabs">
+      <a class="${isUse ? 'on' : ''}" href="#/input/use${itemId ? `/${esc(itemId)}` : ''}">사용 입력</a>
+      <a class="${isUse ? '' : 'on'}" href="#/input/in${itemId ? `/${esc(itemId)}` : ''}">입고 입력</a>
+    </div>
+    <form class="card form" data-form="stock" data-type="${isUse ? 'out' : 'in'}" novalidate>
+      <label class="field"><span>품목</span><select name="itemId">
+        ${state.items.map(i => `<option value="${esc(i.id)}" ${i.id === itemId ? 'selected' : ''}>${esc(i.name)} (남은 ${num(i.currentStock)}${esc(i.unit)})</option>`).join('')}
+      </select></label>
+      <div class="grid2">
+        <label class="field"><span>수량</span><input name="quantity" type="number" inputmode="numeric" min="1" autofocus></label>
+        <label class="field"><span>날짜</span><input name="date" type="date" value="${inputDate(now)}"></label>
+      </div>
+      <label class="field"><span>메모 (선택)</span><input name="memo" maxlength="100"></label>
+      <p class="error" data-error></p>
+      <button class="btn ${isUse ? 'btn-blue' : 'btn-green'}">저장</button>
+    </form>`;
+  },
+
+  items(filter = 'all') {
+    const groups = { all: '전체', reorder: '발주 필요', warning: '주의', inbound: '입고 대기', normal: '정상' };
+    const match = i => {
+      const s = statusOf(i);
+      return filter === 'all' || s === filter || (filter === 'reorder' && s === 'urgent');
+    };
+    const list = state.items.filter(match).sort(bySoonest);
+    return `<h1 class="page-title">전체 품목</h1>
+    <div class="chips">${Object.entries(groups).map(([k, v]) => `<a class="${k === filter ? 'on' : ''}" href="#/items/${k}">${v}</a>`).join('')}</div>
+    <div class="stack">${list.map(i => itemCard(i)).join('') || '<p class="card empty">해당하는 품목이 없어요</p>'}</div>`;
+  },
+
+  item(id) {
+    const i = itemById(id);
+    if (!i) return `<p class="card empty">품목을 찾을 수 없어요</p>`;
+    const s = statusOf(i);
+    const d = daysLeft(i);
+    const order = openOrder(i.id);
+    const rec = recommended(i);
+    const late = d !== null && d < i.leadTimeDays && !order;
+    const logs = sortedLogs().filter(l => l.itemId === i.id);
+    return `<h1 class="page-title">${esc(i.name)}</h1>
+    <div class="stack">
+      ${itemCard(i, false)}
+      <section class="card">
+        <div class="actions">
+          <a class="btn btn-sm btn-blue" href="#/input/use/${esc(i.id)}">사용 입력</a>
+          <a class="btn btn-sm btn-green" href="#/input/in/${esc(i.id)}">입고 입력</a>
+          ${order ? '' : `<a class="btn btn-sm btn-white" href="#/order/${esc(i.id)}">발주 완료</a>`}
+          <a class="btn btn-sm btn-white" href="#/edit/${esc(i.id)}">품목 수정</a>
+        </div>
+        <div class="facts">
+          <div><span>발주 알림 기준</span><strong>${num(i.reorderPoint)}${esc(i.unit)}</strong></div>
+          <div><span>긴급 알림 기준</span><strong>${num(i.urgentPoint)}${esc(i.unit)}</strong></div>
+          <div><span>최대 보관량</span><strong>${num(i.maxStorage)}${esc(i.unit)}</strong></div>
+          <div><span>하루 사용량</span><strong>${num(i.dailyUsage)}${esc(i.unit)}</strong></div>
+          <div><span>입고까지</span><strong>${num(i.leadTimeDays)}일</strong></div>
+          <div><span>추천 발주점 (참고)</span><strong>${num(rec)}${esc(i.unit)}</strong></div>
+        </div>
+        ${late ? `<p class="warn">지금 발주해도 입고(${num(i.leadTimeDays)}일 뒤)보다 재고가 먼저 떨어져요 (D-${d}).</p>` : ''}
+        ${s === 'urgent' && order ? `<p class="warn">이미 발주함, 입고 예정 ${fmtDate(order.expectedArrivalAt)}</p>` : ''}
+      </section>
+      <section>
+        <div class="sec-head"><h2>사용·입고 기록</h2></div>
+        <div class="card activity">${logs.map(logRow).join('') || '<p class="empty">아직 기록이 없어요</p>'}</div>
+      </section>
+    </div>`;
+  },
+
+  order(id) {
+    const i = itemById(id);
+    if (!i) return `<p class="card empty">품목을 찾을 수 없어요</p>`;
+    const qty = Math.max(1, i.maxStorage - i.currentStock);
+    return `<h1 class="page-title">${esc(i.name)} 발주 완료 입력</h1>
+    <form class="card form" data-form="order" data-item="${esc(i.id)}" novalidate>
+      <div class="grid2">
+        <label class="field"><span>발주 수량</span><input name="quantity" type="number" inputmode="numeric" min="1" value="${qty}"></label>
+        <label class="field"><span>입고 예정일</span><input name="date" type="date" value="${inputDate(at(i.leadTimeDays))}"></label>
+      </div>
+      <p class="error" data-error></p>
+      <button class="btn btn-blue">저장</button>
+    </form>`;
+  },
+
+  orders() {
+    const list = [...state.orders].sort((a, b) => b.orderedAt - a.orderedAt);
+    const row = o => {
+      const i = itemById(o.itemId);
+      const done = o.status === 'received';
+      return `<div class="act">
+        <span class="act-icon ${done ? 'act-in' : 'act-out'}">${icon(done ? 'i-check' : 'i-list')}</span>
+        <div><p class="act-title">${esc(i ? i.name : '삭제된 품목')} ${num(o.quantity)}${esc(i ? i.unit : '개')} 발주</p>
+        <p class="act-time">발주 ${fmtDate(o.orderedAt)} · ${done ? `입고 ${fmtDate(o.receivedAt)}` : `입고 예정 ${fmtDate(o.expectedArrivalAt)}`}</p></div>
+        <span class="right">${done ? '<span class="badge s-normal">입고 완료</span>' : `<button class="btn btn-sm btn-green" data-receive="${esc(o.id)}">입고 처리</button>`}</span>
+      </div>`;
+    };
+    return `<h1 class="page-title">발주 기록</h1><div class="card activity">${list.map(row).join('') || '<p class="empty">아직 발주 기록이 없어요</p>'}</div>`;
+  },
+
+  activity() {
+    return `<h1 class="page-title">활동 기록</h1><div class="card activity">${sortedLogs().map(logRow).join('') || '<p class="empty">아직 기록이 없어요</p>'}</div>`;
+  },
+
+  alerts() {
+    const row = a => {
+      const i = itemById(a.itemId);
+      return `<a class="act" href="#/item/${esc(a.itemId)}">
+        <span class="act-icon act-alert">${icon('i-bell')}</span>
+        <div><p class="act-title">${esc(i ? i.name : '삭제된 품목')} ${a.level === 'urgent' ? '긴급 알림' : '발주 알림'}</p>
+        <p class="act-time">${fmtDateTime(a.sentAt)} · 이메일</p></div>
+      </a>`;
+    };
+    return `<h1 class="page-title">알림 기록</h1><div class="card activity">${state.alerts.map(row).join('') || '<p class="empty">보낸 알림이 없어요</p>'}</div>`;
+  },
+
+  settings() {
+    return `<h1 class="page-title">설정</h1>
+    <form class="card form" data-form="settings" novalidate>
+      <label class="field"><span>알림 받을 이메일</span><input name="email" type="email" placeholder="name@example.com"></label>
+      <label class="field"><span>알림 시간</span><input name="hour" type="time" value="09:00"></label>
+      <button class="btn btn-blue">저장</button>
+    </form>`;
+  },
+
+  form(id) {
+    const i = id ? itemById(id) : null;
+    if (id && !i) return `<p class="card empty">품목을 찾을 수 없어요</p>`;
+    const v = i || { name: '', unit: '개', icon: 'i-box', supplier: '', currentStock: '', maxStorage: '', leadTimeDays: '', dailyUsage: '', safetyStock: '', reorderPoint: '', urgentPoint: '' };
+    const n = (name, label, help = '') => `<label class="field"><span>${label}</span><input name="${name}" type="number" inputmode="numeric" min="0" value="${esc(v[name])}">${help ? `<small>${help}</small>` : ''}</label>`;
+    return `<h1 class="page-title">${i ? '품목 수정' : '품목 추가'}</h1>
+    <form class="card form" data-form="item" data-id="${esc(id || '')}" novalidate>
+      <div class="grid2">
+        <label class="field"><span>이름</span><input name="name" maxlength="40" value="${esc(v.name)}"></label>
+        <label class="field"><span>단위</span><input name="unit" maxlength="10" value="${esc(v.unit)}"></label>
+      </div>
+      <div class="grid2">
+        <label class="field"><span>발주처</span><input name="supplier" maxlength="40" value="${esc(v.supplier)}"></label>
+        <label class="field"><span>아이콘</span><select name="icon">${Object.entries(ICONS).map(([k, t]) => `<option value="${k}" ${k === v.icon ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
+      </div>
+      <div class="grid2">${n('currentStock', '현재 재고')}${n('maxStorage', '최대 보관량')}</div>
+      <div class="grid2">${n('dailyUsage', '하루 사용량')}${n('leadTimeDays', '입고까지 걸리는 일수')}</div>
+      <div class="grid2">${n('reorderPoint', '발주 알림 기준')}${n('urgentPoint', '긴급 알림 기준')}</div>
+      ${n('safetyStock', '안전재고', '추천 발주점 계산에만 씁니다')}
+      <p class="hint" data-rec></p>
+      <p class="error" data-error></p>
+      <button class="btn btn-blue">저장</button>
+    </form>`;
+  },
+};
+
+const NAV = [
+  ['dashboard', '대시보드', 'i-home'],
+  ['input', '입력하기', 'i-pen'],
+  ['orders', '발주 기록', 'i-list'],
+  ['settings', '설정', 'i-gear'],
+];
+const NAV_OWNER = { items: 'dashboard', item: 'dashboard', activity: 'dashboard', alerts: 'dashboard', new: 'dashboard', edit: 'dashboard', order: 'dashboard' };
+
+/* 프리뷰 창은 파일을 data: 주소로 열어 주소(hash) 변경이 막힌다. 그래서 경로를 변수로 관리한다. */
+let currentPath = '#/dashboard';
+function go(path) {
+  currentPath = path;
+  render();
+}
+
+function render() {
+  const [route = 'dashboard', a, b] = currentPath.replace(/^#\/?/, '').split('/').filter(Boolean);
+  const table = {
+    dashboard: () => views.dashboard(),
+    input: () => views.input(a, b),
+    items: () => views.items(a),
+    item: () => views.item(a),
+    order: () => views.order(a),
+    orders: () => views.orders(),
+    activity: () => views.activity(),
+    alerts: () => views.alerts(),
+    settings: () => views.settings(),
+    new: () => views.form(),
+    edit: () => views.form(a),
+  };
+  const html = (table[route] || table.dashboard)();
+  document.getElementById('view').innerHTML = `${html}<p class="note">화면 확인용 프로토타입입니다. 샘플 데이터이며 새로고침하면 처음으로 돌아갑니다.</p>`;
+  const active = NAV_OWNER[route] || route;
+  document.getElementById('nav').innerHTML = NAV.map(([key, label, ic]) =>
+    `<a href="#/${key}" class="${key === active ? 'on' : ''}" ${key === active ? 'aria-current="page"' : ''}>${icon(ic)}${label}</a>`).join('');
+  document.getElementById('bell-dot').hidden = !state.alerts.length;
+  updateRecommendation();
+  window.scrollTo(0, 0);
+}
+
+function toast(message) {
+  const t = document.getElementById('toast');
+  t.textContent = message;
+  t.hidden = false;
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => { t.hidden = true; }, 2400);
+}
+
+function updateRecommendation() {
+  const form = document.querySelector('[data-form="item"]');
+  if (!form) return;
+  const f = new FormData(form);
+  const usage = Number(f.get('dailyUsage'));
+  const lead = Number(f.get('leadTimeDays'));
+  const box = form.querySelector('[data-rec]');
+  if (!usage || !lead) {
+    box.textContent = '하루 사용량과 입고 일수를 넣으면 추천 발주점을 참고로 보여드려요.';
+    return;
+  }
+  const rec = usage * lead + Number(f.get('safetyStock') || 0);
+  box.innerHTML = `추천 발주점 <strong>${num(rec)}</strong> (참고용, 자동 적용되지 않습니다)`;
+}
+
+const fail = (form, message) => { form.querySelector('[data-error]').textContent = message; };
+const positiveInt = v => Number.isInteger(Number(v)) && Number(v) > 0;
+
+const submitters = {
+  stock(form, f) {
+    const item = itemById(f.get('itemId'));
+    const qty = Number(f.get('quantity'));
+    const type = form.dataset.type;
+    if (!positiveInt(f.get('quantity'))) return fail(form, '수량을 1 이상의 숫자로 입력해 주세요.');
+    if (!f.get('date')) return fail(form, '날짜를 입력해 주세요.');
+    if (type === 'out' && qty > item.currentStock) return fail(form, `남은 수량(${num(item.currentStock)}${item.unit})보다 많이 입력했어요.`);
+    item.currentStock += type === 'in' ? qty : -qty;
+    const when = new Date(`${f.get('date')}T00:00:00`);
+    const clock = new Date();
+    when.setHours(clock.getHours(), clock.getMinutes());
+    state.logs.push({ itemId: item.id, type, quantity: qty, memo: f.get('memo').trim(), occurredAt: when });
+    toast(`${item.name} ${num(qty)}${item.unit} ${type === 'in' ? '입고' : '사용'} 저장했어요`);
+    go('#/dashboard');
+  },
+  order(form, f) {
+    const item = itemById(form.dataset.item);
+    if (!positiveInt(f.get('quantity'))) return fail(form, '발주 수량을 1 이상의 숫자로 입력해 주세요.');
+    if (!f.get('date')) return fail(form, '입고 예정일을 입력해 주세요.');
+    state.orders.push({
+      id: `o${Date.now()}`, itemId: item.id, quantity: Number(f.get('quantity')), orderedAt: new Date(),
+      expectedArrivalAt: new Date(`${f.get('date')}T12:00:00`), status: 'ordered', receivedAt: null,
+    });
+    toast(`${item.name} 입고 대기로 바꿨어요`);
+    go(`#/item/${item.id}`);
+  },
+  item(form, f) {
+    const name = f.get('name').trim();
+    const fields = ['currentStock', 'maxStorage', 'dailyUsage', 'leadTimeDays', 'reorderPoint', 'urgentPoint', 'safetyStock'];
+    const values = Object.fromEntries(fields.map(k => [k, Number(f.get(k) || 0)]));
+    if (!name) return fail(form, '품목 이름을 입력해 주세요.');
+    if (values.maxStorage <= 0) return fail(form, '최대 보관량을 입력해 주세요.');
+    if (values.reorderPoint <= 0) return fail(form, '발주 알림 기준을 입력해 주세요.');
+    if (values.urgentPoint > values.reorderPoint) return fail(form, '긴급 기준은 발주 기준보다 클 수 없어요.');
+    const base = { name, unit: f.get('unit').trim() || '개', supplier: f.get('supplier').trim(), icon: f.get('icon'), ...values };
+    const id = form.dataset.id;
+    if (id) Object.assign(itemById(id), base);
+    else state.items.push({ id: `i${Date.now()}`, ...base });
+    toast(`${name} 저장했어요`);
+    go(id ? `#/item/${id}` : '#/dashboard');
+  },
+  settings() {
+    toast('설정을 저장했어요 (프로토타입: 실제 메일은 보내지 않습니다)');
+  },
+};
+
+document.addEventListener('submit', e => {
+  const form = e.target.closest('[data-form]');
+  if (!form) return;
+  e.preventDefault();
+  submitters[form.dataset.form](form, new FormData(form));
+});
+
+document.addEventListener('input', e => {
+  if (e.target.closest('[data-form="item"]')) updateRecommendation();
+});
+
+document.addEventListener('click', e => {
+  const link = e.target.closest('a[href^="#/"]');
+  if (link) {
+    e.preventDefault();
+    go(link.getAttribute('href'));
+    return;
+  }
+  const btn = e.target.closest('[data-receive]');
+  if (!btn) return;
+  const order = state.orders.find(o => o.id === btn.dataset.receive);
+  const item = itemById(order.itemId);
+  order.status = 'received';
+  order.receivedAt = new Date();
+  if (item) {
+    item.currentStock += order.quantity;
+    state.logs.push({ itemId: item.id, type: 'in', quantity: order.quantity, memo: '발주 입고 처리', occurredAt: new Date() });
+    toast(`${item.name} ${num(order.quantity)}${item.unit} 입고 처리했어요`);
+  }
+  render();
+});
+
+document.getElementById('today').textContent = `오늘 ${now.getFullYear()}.${pad(now.getMonth() + 1)}.${pad(now.getDate())} (${DAYS[now.getDay()]})`;
+render();
+</script>
+</body>
+</html>

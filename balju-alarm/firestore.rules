@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isOwner(data) {
+      return signedIn() && data.ownerId == request.auth.uid;
+    }
+
+    match /items/{id} {
+      allow read, delete: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data);
+      allow update: if isOwner(resource.data) && isOwner(request.resource.data);
+    }
+
+    // 재고 기록은 고치거나 지우지 않는다. 잘못 넣은 수량은 보정 기록으로 바로잡는다.
+    match /stockLogs/{id} {
+      allow read: if isOwner(resource.data);
+      allow create: if isOwner(request.resource.data);
+    }
+  }
+}
