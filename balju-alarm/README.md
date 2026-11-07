@@ -9,7 +9,7 @@ npm install
 npm run dev
 ```
 
-브라우저에서 `http://localhost:3000`을 엽니다. Firebase 값을 넣지 않으면 **로컬 저장 모드**로 실행되고, 입력한 내용은 그 브라우저에만 저장됩니다.
+브라우저에서 `http://localhost:3000`을 엽니다. Firebase 웹 설정값은 `src/lib/firebase.ts`에 들어 있어 바로 프로젝트 `test-1ef99`에 연결됩니다. 이 값은 비밀이 아니라 브라우저에 공개되는 앱 식별값이고, 데이터는 로그인과 `firestore.rules`로 보호합니다.
 
 ## 확인
 
@@ -24,7 +24,7 @@ npm run build
 1. Firebase 콘솔에서 프로젝트를 만들고 웹 앱을 추가합니다.
 2. Authentication에서 **이메일/비밀번호** 로그인을 켜고, Users 탭에서 대표 계정을 직접 만듭니다. 앱에는 회원가입 화면이 없습니다.
 3. Firestore Database를 위치 `asia-northeast3`(서울)로 만듭니다. 위치는 나중에 바꿀 수 없습니다. 만들지 않고 5번을 실행하면 미국 위치로 자동 생성됩니다.
-4. `.env.example`을 `.env.local`로 복사하고 웹 앱 설정 값을 넣습니다.
+4. 다른 Firebase 프로젝트를 쓸 때만 `.env.example`을 `.env.local`로 복사하고 웹 앱 설정 값을 넣습니다. 이 값이 코드의 기본값보다 우선합니다.
 5. 보안 규칙과 인덱스를 올립니다.
 
 ```bash
@@ -36,8 +36,6 @@ npx firebase-tools deploy --only firestore --project <프로젝트-ID>
 ```
 
 처음 올린 인덱스는 완성까지 몇 분 걸립니다. 그동안 대시보드에 "데이터를 불러오지 못했어요"가 나올 수 있습니다.
-
-로컬 저장 모드에서 입력한 데이터는 Firebase로 자동으로 옮겨지지 않습니다.
 
 ## 1차 범위
 
