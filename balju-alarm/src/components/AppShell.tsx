@@ -63,10 +63,14 @@ function Frame({ auth, children }: { auth: AuthState; children: ReactNode }) {
           {now.getTime() > 0 && <span className="date">오늘 {formatToday(now)}</span>}
           {auth.status === "signedIn" ? (
             <details className="user-menu">
-              <summary>대표님</summary>
-              <button type="button" onClick={() => void logout()}>
-                로그아웃
-              </button>
+              <summary>내 계정</summary>
+              <div className="menu" onClick={(event) => event.currentTarget.closest("details")?.removeAttribute("open")}>
+                <span className="menu-email">{auth.email}</span>
+                <Link href="/account">비밀번호 변경</Link>
+                <button type="button" onClick={() => void logout()}>
+                  로그아웃
+                </button>
+              </div>
             </details>
           ) : (
             <span className="user">대표님</span>

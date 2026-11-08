@@ -1,19 +1,14 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
-import { Icon } from "@/components/Icon";
-import { login, useAuth } from "@/lib/auth";
+import Link from "next/link";
+import { useState, type FormEvent } from "react";
+import { AuthCard } from "@/components/AuthCard";
+import { login } from "@/lib/auth";
+import { authErrorMessage } from "@/lib/authErrors";
 
 export default function LoginPage() {
-  const auth = useAuth();
-  const router = useRouter();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (auth.status === "signedIn" || auth.status === "local") router.replace("/");
-  }, [auth.status, router]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -22,20 +17,24 @@ export default function LoginPage() {
     setError("");
     try {
       await login(String(values.get("email")).trim(), String(values.get("password")));
-    } catch {
-      setError("이메일 또는 비밀번호를 확인해 주세요.");
+    } catch (caught) {
+      setError(authErrorMessage(caught));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <div className="center">
-      <form className="card form login" onSubmit={submit}>
-        <div className="brand">
-          <Icon name="logo" />
-          발주 알림
-        </div>
+    <AuthCard
+      title="로그인"
+      footer={
+        <>
+          <Link href="/signup">처음이신가요? 회원가입</Link>
+          <Link href="/reset-password">비밀번호를 잊으셨나요?</Link>
+        </>
+      }
+    >
+      <form className="form" onSubmit={submit}>
         <label className="field">
           <span>이메일</span>
           <input name="email" type="email" autoComplete="username" required />
@@ -51,6 +50,6 @@ export default function LoginPage() {
           로그인
         </button>
       </form>
-    </div>
+    </AuthCard>
   );
 }

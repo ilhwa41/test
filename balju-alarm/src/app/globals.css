@@ -37,7 +37,14 @@ button:disabled { opacity: 0.6; cursor: default; }
 .user { color: var(--title); font-weight: 500; }
 .user-menu { position: relative; }
 .user-menu summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; color: var(--title); font-weight: 500; }
-.user-menu button { position: absolute; right: 0; top: 48px; z-index: 6; min-height: 44px; padding: 0 18px; white-space: nowrap; background: var(--card); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow); }
+.user-menu .menu { position: absolute; right: 0; top: 48px; z-index: 6; display: grid; min-width: 200px; padding: 6px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); }
+.user-menu .menu a, .user-menu .menu button { display: flex; align-items: center; min-height: 44px; padding: 0 12px; border: 0; border-radius: 8px; background: none; color: var(--title); text-align: left; white-space: nowrap; }
+.user-menu .menu a:hover, .user-menu .menu button:hover { background: var(--bg); }
+.menu-email { padding: 8px 12px; color: var(--sub); font-size: 13px; overflow-wrap: anywhere; }
+.auth-title { color: var(--title); font-size: 20px; font-weight: 700; margin: 4px 0 16px; }
+.auth-links { display: grid; gap: 2px; margin-top: 12px; }
+.auth-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--blue); font-size: 14px; }
+.sec-title { color: var(--title); font-size: 18px; font-weight: 700; }
 
 .mode-note { background: var(--banner); color: var(--text); font-size: 13px; padding: 8px 28px; }
 .content { max-width: 1120px; margin: 0 auto; padding: 24px 28px 40px; }
@@ -127,6 +134,7 @@ a.card:hover { box-shadow: 0 4px 16px rgba(27, 36, 48, 0.11); }
 
 .center { display: grid; place-items: center; min-height: 100vh; padding: 16px; color: var(--sub); }
 .login { width: 100%; max-width: 400px; }
+.login .form { max-width: none; }
 .login .brand { padding: 0; }
 
 .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); background: var(--title); color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 15px; z-index: 10; max-width: calc(100vw - 32px); }
